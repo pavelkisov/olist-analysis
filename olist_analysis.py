@@ -116,8 +116,11 @@ def load_real_orders() -> tuple[pd.DataFrame, bool]:
             orders = orders.drop(columns=["product_id"])
     orders = orders.dropna(subset=["order_total"]).reset_index(drop=True)
 
-    # Единая схема со synthetic path
-    df = orders.rename(columns={"customer_unique_id": "customer_id"})[
+    # Единая схема со synthetic path.
+    # ВАЖНО: в orders уже есть колонка customer_id (уникален для заказа), поэтому
+    # сначала drop, потом rename customer_unique_id -> customer_id. Если переименовать
+    # напрямую, получится дубликат колонок и to_sql() упадёт с "duplicate column name".
+    df = orders.drop(columns=["customer_id"]).rename(columns={"customer_unique_id": "customer_id"})[
         ["customer_id", "order_id", "order_date", "order_month",
          "price", "freight_value", "order_total", "seller_id", "product_category"]
     ].copy()
