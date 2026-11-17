@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  run-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Olist analysis (synthetic mode)
+        run: python olist_analysis.py
+
+      - name: Verify results JSON produced
+        run: |
+          python -c "import json; d=json.load(open('results/olist-real-results.json')); \
+          m=d['realMetrics']; assert m['n_orders'] == 99441, 'order count mismatch'; \
+          assert m['aov'] > 100, 'AOV out of range'; \
+          print('OK: olist results valid, AOV =', m['aov'], '| synthetic =', m['is_synthetic'])"
